@@ -46,7 +46,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///post
 db = SQLAlchemy()
 db.init_app(app)
 
-print(app.config['SECRET_KEY'])
 
 
 # TODO: Create a User table for all your registered users.
