@@ -1,19 +1,22 @@
+import os
 from datetime import date
+from datetime import datetime
+from functools import wraps
+
 from flask import Flask, abort, render_template, redirect, url_for, flash
 from flask_bootstrap import Bootstrap5
 from flask_ckeditor import CKEditor
 from flask_gravatar import Gravatar
 from flask_login import UserMixin, login_user, LoginManager, current_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
-from functools import wraps
-from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.orm import relationship
+from werkzeug.security import generate_password_hash, check_password_hash
+
 # Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Integer, String, Text, Column
-from typing import List
-from datetime import datetime
+
+from dotenv import load_dotenv
+
 '''
 Make sure the required packages are installed: 
 Open the Terminal in PyCharm (bottom left). 
@@ -27,8 +30,10 @@ pip3 install -r requirements.txt
 This will install the packages from the requirements.txt for this project.
 '''
 
+load_dotenv("C:/Users/EB/EnviromentVariables/.env.txt")
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
+app.config['SECRET_KEY'] = os.environ.get("FLASK_KEY")
 ckeditor = CKEditor(app)
 Bootstrap5(app)
 
@@ -36,11 +41,12 @@ Bootstrap5(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.d")
 db = SQLAlchemy()
 db.init_app(app)
+
+print(app.config['SECRET_KEY'])
 
 
 # TODO: Create a User table for all your registered users.
@@ -73,7 +79,8 @@ class BlogPosts(db.Model):
     # Create reference to the User object, the "posts" refers to the posts protperty in the User class.
     author = relationship("User", back_populates="posts")
 
-    comments = relationship("Comment",back_populates="parent_post")
+    comments = relationship("Comment", back_populates="parent_post")
+
 
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -88,14 +95,14 @@ class Comment(db.Model):
     parent_post = relationship("BlogPosts", back_populates="comments")
 
 
-
-
 with app.app_context():
     db.create_all()
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.get_or_404(User, user_id)
+
 
 def admin_only(f):
     @wraps(f)
@@ -104,6 +111,7 @@ def admin_only(f):
             return abort(code=403)
         else:
             return f(*args, **kwargs)
+
     return wrapper
 
 
@@ -116,6 +124,7 @@ gravatar = Gravatar(app,
                     force_lower=False,
                     use_ssl=False,
                     base_url=None)
+
 
 # TODO: Use Werkzeug to hash the user's password when creating a new user.
 @app.route('/register', methods=["GET", "POST"])
@@ -167,7 +176,6 @@ def login():
             login_user(user)
             print(current_user.is_authenticated)
             return redirect(url_for("get_all_posts"))
-
 
     return render_template("login.html", form=login_form)
 
