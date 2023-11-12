@@ -94,8 +94,8 @@ class Comment(db.Model):
     parent_post = relationship("BlogPosts", back_populates="comments")
 
 
-with app.app_context():
-    db.create_all()
+# with app.app_context():
+#     db.create_all()
 
 
 @login_manager.user_loader
